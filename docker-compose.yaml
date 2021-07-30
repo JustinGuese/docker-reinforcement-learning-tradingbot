@@ -1,0 +1,5 @@
+version: "3.9"
+services:
+    rlbot:
+        image: "guestros/reinforcement-learning-tradingbot:latest"
+        build: .
