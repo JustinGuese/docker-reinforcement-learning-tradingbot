@@ -1,5 +1,3 @@
-import gym
-import gym_anytrading
 from gym_anytrading.envs import StocksEnv
 
 from stable_baselines3.common.vec_env import DummyVecEnv
