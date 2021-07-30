@@ -23,11 +23,30 @@ if environ.get('EPISODES'):
     EPISODES = int(environ.get('EPISODES'))
 else:
     EPISODES = 1000000
+    
 MODEL_FILENAME = "persistent/a2cmlp.hf5"
+VALSTORE_FILENAME = "persistent/bestvalstore.json"
+
+
+def saveConfig(bestreward,bestprofit,episodes):
+    tmp = {
+        "bestreward" : bestreward,
+        "bestprofit" : bestprofit,
+        "bestreward_date" : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "total_episodes" : episodes
+    }
+    with open(VALSTORE_FILENAME, "w") as f:
+        json.dump(tmp, f, indent=4)
 
 # load json file bestvalstore.json and read it into python dictionary
-with open('persistent/bestvalstore.json', "r") as f:
-    CONFIG = json.load(f)
+my_file = Path(VALSTORE_FILENAME)
+if my_file.is_file():
+    with open(VALSTORE_FILENAME, "r") as f:
+        CONFIG = json.load(f)
+else:
+    saveConfig(0.,0.,0)
+    
+
 
 df = yf.download("ETH-USD", period="730d",interval="1h")
 df = add_all_ta_features(df, open="Open", high="High", low="Low", close="Close", volume="Volume", fillna=True)
@@ -41,15 +60,6 @@ WINDOW = 20
 TRAINTESTSPLIT = .95
 TRAINLOC = int(TRAINTESTSPLIT * len(df))
 
-def saveConfig(bestreward,bestprofit,episodes):
-    tmp = {
-        "bestreward" : bestreward,
-        "bestprofit" : bestprofit,
-        "bestreward_date" : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "total_episodes" : episodes
-    }
-    with open('persistent/bestvalstore.json', "w") as f:
-        json.dump(tmp, f, indent=4)
 
 def my_processed_data(env):
     start = env.frame_bound[0] - env.window_size
@@ -83,7 +93,7 @@ if my_file.is_file():
     model = A2C.load(MODEL_FILENAME, env)
 else:
     print("creating new model")
-    model = A2C("MlpPolicy", env, learning_rate= 0.01,  verbose=2)
+    model = A2C("MlpPolicy", env, learning_rate= 0.01,  verbose=0)
 
 # train
 model.learn(total_timesteps=EPISODES)
