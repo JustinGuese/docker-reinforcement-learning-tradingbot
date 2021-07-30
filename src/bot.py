@@ -15,13 +15,18 @@ from datetime import datetime
 
 from ta import add_all_ta_features
 
+from pathlib import Path
+
 import json
 
-
-EPISODES = 1000000
+if environ.get('EPISODES'):
+    EPISODES = int(environ.get('EPISODES'))
+else:
+    EPISODES = 1000000
+MODEL_FILENAME = "persistent/a2cmlp.hf5"
 
 # load json file bestvalstore.json and read it into python dictionary
-with open('persistent/bestvalstore.json') as f:
+with open('persistent/bestvalstore.json', "r") as f:
     CONFIG = json.load(f)
 
 df = yf.download("ETH-USD", period="730d",interval="1h")
@@ -43,8 +48,8 @@ def saveConfig(bestreward,bestprofit,episodes):
         "bestreward_date" : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "total_episodes" : episodes
     }
-    with open('persistent/bestvalstore.json') as f:
-        json.dumps(tmp, f, indent=4)
+    with open('persistent/bestvalstore.json', "w") as f:
+        json.dump(tmp, f, indent=4)
 
 def my_processed_data(env):
     start = env.frame_bound[0] - env.window_size
@@ -61,16 +66,25 @@ class MyCustomEnv(StocksEnv):
 
     _process_data = my_processed_data
     
-# make model
+
 
 env = MyCustomEnv(df=df, window_size=WINDOW, frame_bound=(WINDOW,TRAINLOC)) # training data
 env_training = lambda: env # gym.make("stocks-v0", df=df, frame_bound=(5, 200), window_size=5)
 env = DummyVecEnv([env_training])
 testenv = MyCustomEnv(df=df, window_size=WINDOW, frame_bound=(TRAINLOC,len(df))) # test data # gym.make("stocks-v0", df=df, frame_bound=(200, 300), window_size=5)
 
-
+# make model
 # create model
-model = A2C("MlpPolicy", env, learning_rate= 0.01,  verbose=2)
+# if model exists load it, otherwise create a new one
+my_file = Path(MODEL_FILENAME)
+if my_file.is_file():
+    print("loading model")
+    # file exists
+    model = A2C.load(MODEL_FILENAME, env)
+else:
+    print("creating new model")
+    model = A2C("MlpPolicy", env, learning_rate= 0.01,  verbose=2)
+
 # train
 model.learn(total_timesteps=EPISODES)
 
@@ -85,11 +99,11 @@ while True:
 
     if done:
         print(info)
-        if info.get("total_reward") > CONFIG.get("bestreward"):
+        if info.get("total_reward") > (CONFIG.get("bestreward") + 0.001): # avoid really small changes
             print("improvement! saving now. best reward: %.2f, previous reward: %.2f" % (info.get("total_reward"), CONFIG.get("bestreward")))
             saveConfig(info.get("total_reward"),info.get("total_profit"),int(CONFIG.get("total_episodes"))+EPISODES)
             # save model
-            model.save("persistent/a2cmlp.hf5")
+            model.save(MODEL_FILENAME)
         else:
             print("no improvement :( best reward: %.2f, previous reward: %.2f" % (info.get("total_reward"), CONFIG.get("bestreward")))
         break

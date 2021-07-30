@@ -3,3 +3,10 @@ services:
     rlbot:
         image: "guestros/reinforcement-learning-tradingbot:latest"
         build: .
+        volumes:
+            - rlbotstorage:/app/persistent/
+        environment:
+            - EPISODES=1000000
+
+volumes:
+    rlbotstorage:
