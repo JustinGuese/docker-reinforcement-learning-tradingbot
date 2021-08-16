@@ -109,11 +109,11 @@ while True:
 
     if done:
         print(info)
-        if info.get("total_profit") > (CONFIG.get("bestprofit") + 0.001): # avoid really small changes
+        if info.get("total_profit") > (CONFIG.get("bestprofit") + 0.001) and info.get("total_reward") > 0.: # avoid really small changes
             print("improvement! saving now. best profit: %.2f, previous profit: %.2f" % (info.get("total_profit"), CONFIG.get("bestprofit")))
             saveConfig(info.get("total_reward"),info.get("total_profit"),int(CONFIG.get("total_episodes"))+EPISODES)
             # save model
-            model.save(MODEL_FILENAME)
+            model.save("persistent/a2cmlp_bestprofit.hf5")
         else:
             print("no improvement :( best reward: %.2f, previous reward: %.2f" % (info.get("total_reward"), CONFIG.get("bestreward")))
         break
