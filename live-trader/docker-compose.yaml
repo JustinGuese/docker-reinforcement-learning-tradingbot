@@ -1,7 +1,7 @@
 version: "3"
 services:
     rlbot:
-        image: "guestros/reinforcement-learning-tradingbot-livemodule:latest"
+        image: "dfserver:32000/reinforcement-learning-tradingbot-livemodule:latest"
         build: .
         environment:
             - ACCOUNT_URL=http://dfserver:31232
