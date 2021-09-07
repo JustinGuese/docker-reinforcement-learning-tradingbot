@@ -105,16 +105,15 @@ if action != 0.5:
             crntPrice = df.iloc[-1]["Close"]
             amount = int(euravailable / crntPrice)
             
-            if amount == 0:
-                print(" cant buy bc im a poor fuck")
-            else:
-            
-                if action == 1:
+            if action == 1:
+                if amount == 0:
+                    print(" cant buy bc im a poor fuck")
+                else:
                     buy(amount)
-                elif action == 0:
-                    if stockAlreadyOwned == 0:
-                        print("i don't own any stock")
-                    else:
-                        sell(stockAlreadyOwned)
+            elif action == 0:
+                if stockAlreadyOwned == 0:
+                    print("i don't own any stock")
+                else:
+                    sell(stockAlreadyOwned)
             
             
